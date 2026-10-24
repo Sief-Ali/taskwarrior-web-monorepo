@@ -162,3 +162,105 @@ trusted network or protect it with deployment-level access controls before
 exposing it to other users. CORS does not provide authentication or access
 control.
 
+## Using the folders as Git submodules
+
+The `client/` and `server/` directories are independent Git repositories.
+Having a `.git` directory inside each one does not automatically register it
+with a parent repository. A parent repository must track each folder as a
+submodule; it records the child repository URL and the exact commit to use.
+
+### One-time setup in the parent repository
+
+First make sure the client and server commits you want to include are pushed to
+their respective remotes. Keep a backup of the existing folders, including any
+local environment files, before replacing the embedded clones. Run these
+commands from the parent repository after it has been initialized and has an
+initial commit:
+
+```bash
+mv client ../taskwarrior-client-backup
+mv server ../taskwarrior-api-backup
+git submodule add https://github.com/Sief-Ali/taskwarrior-web.git client
+git submodule add https://github.com/Sief-Ali/taskwarrior-api.git server
+git add .gitmodules client server
+git commit -m "chore: add client and server submodules"
+```
+
+Restore local `.env` files from the backups as needed; they are intentionally
+ignored and should not be committed. The root `pnpm-workspace.yaml`, root
+`package.json`, and root lockfile stay in the parent checkout.
+
+If the parent repository or a backup already exists, adapt the paths first and
+verify them with `git status`. The move commands above replace the two
+directories with fresh clones from the child remotes, so do not run them until
+the current folders are backed up and the desired child commits are available
+on those remotes.
+
+### Clone and initialize submodules
+
+To clone the parent and fetch both child repositories in one step:
+
+```bash
+git clone --recurse-submodules <parent-repository-url>
+```
+
+If the parent has already been cloned without its children:
+
+```bash
+git submodule update --init --recursive
+```
+
+After pulling a parent commit that updates a submodule pointer, use the same
+`git submodule update --init --recursive` command to check out the recorded
+child commits.
+
+### Repair a submodule entry with no URL
+
+If `git submodule update` reports `No url found for submodule path 'client' in
+.gitmodules`, the parent index already contains a `client` gitlink, but the
+`.gitmodules` file is missing its path-to-URL mapping. Register the URL, then
+initialize the child:
+
+```bash
+git config -f .gitmodules submodule.client.path client
+git config -f .gitmodules submodule.client.url https://github.com/Sief-Ali/taskwarrior-web.git
+git add .gitmodules
+git submodule sync -- client
+git submodule update --init client
+```
+
+If `server` is also recorded as a submodule and has the same problem, register
+it with `submodule.server.path=server` and URL
+`https://github.com/Sief-Ali/taskwarrior-api.git`, then run
+`git submodule sync -- server` and `git submodule update --init server`.
+Once initialized, a submodule is often checked out at the parent's pinned
+commit (detached HEAD). To make client changes on its remote `main` branch,
+switch to a tracking branch with:
+
+```bash
+git -C client switch --track -c main origin/main
+```
+
+The parent must then record any new child commit with `git add client` from the
+parent directory and commit that pointer update.
+
+### Make and publish changes
+
+Commit and push code changes from inside the relevant child repository. Then
+record the new child commit in the parent repository:
+
+```bash
+cd client
+git switch main
+# edit, commit, and push the client changes
+cd ..
+git add client
+git commit -m "chore: update client submodule"
+```
+
+Use `cd server` and `git add server` for server changes. The parent commit only
+updates the pinned child commit; it does not contain the submodule's source
+files. To intentionally move a submodule to the latest remote branch commit,
+run `git submodule update --remote client` (or `server`) and then commit that
+updated pointer in the parent.
+
