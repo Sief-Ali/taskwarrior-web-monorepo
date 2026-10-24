@@ -1,0 +1,20 @@
+# Dependencies
+**/node_modules/
+
+# Generated output and caches
+**/.next/
+**/dist/
+**/build/
+**/coverage/
+**/.cache/
+**/.turbo/
+*.tsbuildinfo
+
+# Local environment files (keep example templates)
+**/.env
+**/.env.*
+!**/.env.example
+
+# Logs and OS files
+*.log
+.DS_Store
