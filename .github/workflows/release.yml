@@ -100,11 +100,26 @@ jobs:
     if: needs.prepare.outputs.publish_release == 'true'
     runs-on: ubuntu-latest
     steps:
+      - name: Check out release source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: taskwarrior-web-runtime-${{ needs.prepare.outputs.version }}
           path: dist-release
+
+      - name: Verify release files exist
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test -f install.sh
+          test -f dist-release/taskwarrior-web-linux-x64.tar.gz
+          test -f dist-release/taskwarrior-web-linux-x64.tar.gz.sha256
+          echo "All release assets are present."
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
