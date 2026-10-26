@@ -25,6 +25,72 @@ note() {
   printf '\n==> %s\n' "$*"
 }
 
+uninstall() {
+  local failed=0
+  local service
+
+  note "Uninstalling Taskwarrior Web"
+
+  # Stop and disable the application's user services.
+  if command -v systemctl >/dev/null 2>&1; then
+    if ! systemctl --user stop "$WEB_SERVICE" "$API_SERVICE"; then
+      echo "Warning: Could not confirm that both services stopped." >&2
+      echo "If they are still running, stop them manually." >&2
+    fi
+
+    systemctl --user disable "$WEB_SERVICE" "$API_SERVICE" \
+      >/dev/null 2>&1 || true
+  fi
+
+  # Remove the service definitions.
+  for service in "$WEB_SERVICE" "$API_SERVICE"; do
+    if ! rm -f -- "$SERVICE_DIR/$service"; then
+      printf 'Could not remove: %s\n' "$SERVICE_DIR/$service" >&2
+      failed=1
+    fi
+  done
+
+  # Tell systemd to forget the removed service definitions.
+  if command -v systemctl >/dev/null 2>&1; then
+    if ! systemctl --user daemon-reload; then
+      echo "Warning: Could not reload the systemd user manager." >&2
+      echo "Run: systemctl --user daemon-reload" >&2
+    fi
+  fi
+
+  # Remove application releases, current symlink, and rollback leftovers.
+  if [[ -e "$INSTALL_ROOT" || -L "$INSTALL_ROOT" ]]; then
+    if ! rm -rf -- "$INSTALL_ROOT"; then
+      printf 'Could not completely remove: %s\n' "$INSTALL_ROOT" >&2
+      failed=1
+    fi
+  fi
+
+  # Check whether any application files remain.
+  if [[ -e "$INSTALL_ROOT" || -L "$INSTALL_ROOT" ]]; then
+    failed=1
+  fi
+
+  for service in "$WEB_SERVICE" "$API_SERVICE"; do
+    if [[ -e "$SERVICE_DIR/$service" || -L "$SERVICE_DIR/$service" ]]; then
+      failed=1
+    fi
+  done
+
+  if (( failed )); then
+    echo
+    echo "Uninstallation was incomplete. Check these paths manually:"
+    printf '  Application: %s\n' "$INSTALL_ROOT"
+    printf '  Services:    %s/%s\n' "$SERVICE_DIR" "$WEB_SERVICE"
+    printf '               %s/%s\n' "$SERVICE_DIR" "$API_SERVICE"
+    echo "Remove any remaining files only after confirming the services are stopped."
+    return 1
+  fi
+
+  note "Taskwarrior Web has been uninstalled"
+  echo "Your Taskwarrior tasks and configuration have not been removed."
+}
+
 is_active() {
   systemctl --user is-active --quiet "$1"
 }
@@ -68,6 +134,13 @@ cleanup() {
   fi
   exit "$status"
 }
+
+if [[ "${1:-}" == "--uninstall" ]]; then
+  [[ "$#" -eq 1 ]] || die "Usage: bash install.sh --uninstall"
+  uninstall
+  exit $?
+fi
+
 trap cleanup EXIT
 
 check_command() {
