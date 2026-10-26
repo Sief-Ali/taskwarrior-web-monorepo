@@ -19,7 +19,6 @@ curl --fail --location --show-error \
   https://github.com/Sief-Ali/taskwarrior-web-monorepo/releases/latest/download/install.sh \
   --output install.sh
 
-less install.sh
 bash install.sh
 ```
 
