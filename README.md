@@ -16,11 +16,7 @@ Requirements:
 Download and run the installer:
 
 ```bash
-curl --fail --location --show-error \
-  https://github.com/Sief-Ali/taskwarrior-web-monorepo/releases/latest/download/install.sh \
-  --output install.sh
-
-bash install.sh
+curl -fsSL https://github.com/Sief-Ali/taskwarrior-web-monorepo/releases/latest/download/install.sh | bash
 ```
 
 The script installs or updates Taskwarrior Web to the latest stable release.
@@ -50,20 +46,10 @@ Services start when the user's systemd session starts. To keep them running at b
 Use the same installer with the `--uninstall` argument:
 
 ```bash
-bash install.sh --uninstall
+curl -fsSL https://github.com/Sief-Ali/taskwarrior-web-monorepo/releases/latest/download/install.sh | bash -s -- --uninstall
 ```
 
 This stops and disables the application's systemd user services, removes their service files, and deletes the installed application directory under `~/.local/opt/taskwarrior-web`.
-
-If you no longer have the installer, download it again:
-
-```bash
-curl --fail --location --show-error \
-  https://github.com/Sief-Ali/taskwarrior-web-monorepo/releases/latest/download/install.sh \
-  --output install.sh
-
-bash install.sh --uninstall
-```
 
 The uninstaller does **not** remove Taskwarrior itself, your Taskwarrior tasks, or your Taskwarrior configuration. If some files cannot be removed, follow the paths and manual cleanup instructions printed by the script.
 

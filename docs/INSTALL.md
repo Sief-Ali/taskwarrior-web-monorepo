@@ -12,14 +12,10 @@ Requirements:
 - `curl`, `tar`, `sha256sum`, `python3`, `systemd` user services, and `ss`
 - Local ports 3000 and 5000 available
 
-Download the installer from the latest stable release, inspect it if desired, and run it:
+Run the installer from the latest stable release:
 
 ```bash
-curl --fail --location --show-error \
-  https://github.com/Sief-Ali/taskwarrior-web-monorepo/releases/latest/download/install.sh \
-  --output install.sh
-
-bash install.sh
+curl -fsSL https://github.com/Sief-Ali/taskwarrior-web-monorepo/releases/latest/download/install.sh | bash
 ```
 
 The installer checks the environment, runs `task --version` and `task export`, retrieves the latest stable release metadata from GitHub, downloads the runtime archive and checksum, verifies the checksum, validates the archive, installs the release, creates two systemd **user** services, and checks both HTTP endpoints before reporting success.
@@ -55,7 +51,7 @@ sudo loginctl enable-linger "$USER"
 Run the same installer again:
 
 ```bash
-bash install.sh
+curl -fsSL https://github.com/Sief-Ali/taskwarrior-web-monorepo/releases/latest/download/install.sh | bash
 ```
 
 It fetches the latest stable release, verifies its checksum, and switches the `current` symlink to the new version. The installer does not remove older version directories, so you can inspect them or manually remove old releases after confirming the new version works.
@@ -65,17 +61,7 @@ It fetches the latest stable release, verifies its checksum, and switches the `c
 Use the same installer with `--uninstall`:
 
 ```bash
-bash install.sh --uninstall
-```
-
-If you no longer have the installer, download it again from the latest stable release:
-
-```bash
-curl --fail --location --show-error \
-  https://github.com/Sief-Ali/taskwarrior-web-monorepo/releases/latest/download/install.sh \
-  --output install.sh
-
-bash install.sh --uninstall
+curl -fsSL https://github.com/Sief-Ali/taskwarrior-web-monorepo/releases/latest/download/install.sh | bash -s -- --uninstall
 ```
 
 The uninstaller attempts to stop and disable both systemd user services, remove their service files, reload the systemd user manager, and delete the installed application directory, including its releases and active symlink.
