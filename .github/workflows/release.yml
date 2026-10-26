@@ -115,3 +115,4 @@ jobs:
           files: |
             dist-release/taskwarrior-web-linux-x64.tar.gz
             dist-release/taskwarrior-web-linux-x64.tar.gz.sha256
+            install.sh

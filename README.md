@@ -16,11 +16,7 @@ Requirements:
 Download and run the installer:
 
 ```bash
-curl --fail --location --show-error \
-  https://raw.githubusercontent.com/Sief-Ali/taskwarrior-web-monorepo/master/install.sh \
-  --output install.sh
-less install.sh
-bash install.sh
+curl -fL https://github.com/Sief-Ali/taskwarrior-web-monorepo/releases/latest/download/install.sh | bash
 ```
 
 Open <http://localhost:3000> after installation.
