@@ -1,128 +1,126 @@
-# TaskWarrior Web Monorepo
+# Taskwarrior Web
 
-This project brings together the TaskWarrior API and its web client. The API
-and client are Git submodules with their own repositories; this parent repo
-pins the versions used together.
+A web interface for Taskwarrior, backed by the [Taskwarrior API](https://github.com/Sief-Ali/taskwarrior-api).
 
-## Requirements
+## End-user installation
 
-- Git with submodule support.
-- Node.js `20.9.0` or newer.
-- pnpm `12.14.0`.
-- Taskwarrior installed and configured for the operating system user who runs
-  the API. The `task` command must be available on that user's `PATH`.
-- Free local ports `3000` and `5000` for the web client and API.
+The supported release installer currently targets **Linux x86_64/amd64**. It checks the environment, downloads the latest stable runtime-only GitHub Release, verifies its SHA-256 checksum, and installs two systemd user services. It does not clone the source repository or its submodules.
 
-## 1. Clone the project
+Requirements:
 
-Clone the parent repository and both submodules:
+- Node.js 20.9 or newer
+- Taskwarrior installed and configured for the current user
+- `curl`, `tar`, `sha256sum`, `python3`, `systemd` user services, and `ss`
+- Local ports 3000 and 5000 available
+
+Download and run the installer:
+
+```bash
+curl --fail --location --show-error \
+  https://raw.githubusercontent.com/Sief-Ali/taskwarrior-web-monorepo/master/install.sh \
+  --output install.sh
+less install.sh
+bash install.sh
+```
+
+Open <http://localhost:3000> after installation.
+
+### Manage the services
+
+```bash
+systemctl --user status taskwarrior-api.service
+systemctl --user status taskwarrior-web.service
+
+journalctl --user -u taskwarrior-api.service -f
+journalctl --user -u taskwarrior-web.service -f
+```
+
+Services start when the user's systemd session starts. To keep them running at boot even before logging in, run `sudo loginctl enable-linger "$USER"` (administrator authorization required).
+
+See [docs/INSTALL.md](docs/INSTALL.md) for installation paths, upgrades, troubleshooting, release versioning, and release notes.
+
+## Development corner
+
+The following setup is for developers who want to modify the source code. End users do not need to clone the repository or submodules.
+
+### Requirements
+
+- Git with submodule support
+- Node.js 20.9 or newer
+- pnpm 12.14.0
+- Taskwarrior installed and configured for the operating-system user who runs the API
+- Free local ports 3000 and 5000
+
+### Clone the source repository and submodules
 
 ```bash
 git clone --recurse-submodules https://github.com/Sief-Ali/taskwarrior-web-monorepo.git
 cd taskwarrior-web-monorepo
 ```
 
-If you already cloned the parent without its submodules, load them with:
+If the project was cloned without submodules:
 
 ```bash
 git submodule update --init --recursive
-```
-
-Check that both folders were populated:
-
-```bash
 git submodule status
 ```
 
-The output should list entries for `client` and `server`.
-
-## 2. Install pnpm and project dependencies
-
-Install the required pnpm version if it is not already available:
+### Install dependencies
 
 ```bash
 npm install --global pnpm@12.14.0
-pnpm --version
-```
-
-From the monorepo root, install dependencies for the workspace:
-
-```bash
 pnpm install
 ```
 
-## 3. Check Taskwarrior
+### Check Taskwarrior
 
-Run these commands as the same operating system user that will run the API:
+Run as the same OS user that will run the API:
 
 ```bash
 task --version
 task export
 ```
 
-The API uses that user's Taskwarrior configuration and data directory. Its
-create, edit, complete, start, stop, and delete actions make real changes to
-that data. Use a separate Taskwarrior data directory if you want to try the
-app without changing your personal tasks.
+The API's create, edit, complete, start, stop, and delete actions make real changes to that user's Taskwarrior data. Use a separate Taskwarrior data directory for experiments if you do not want to change personal tasks.
 
-## 4. Configure the API and client
+### Configure the API and client
 
-Create the API's local environment file:
+Create the API environment file:
 
 ```bash
 cp server/.env.example server/.env
 ```
 
-The defaults use API port `5000`, the `/v1` route prefix, and the Taskwarrior
-command `task`. The default CORS configuration allows the local client at
-`http://localhost:3000` and `http://127.0.0.1:3000`.
+The default API port is `5000`, the route prefix is `/v1`, and the Taskwarrior command is `task`. The client defaults to `http://localhost:5000/v1`.
 
-The client defaults to `http://localhost:5000/v1`. To use a different API URL,
-create `client/.env.local` with:
+To override the client API URL, create `client/.env.local`:
 
 ```dotenv
 NEXT_PUBLIC_TASKWARRIOR_API_URL=http://localhost:5000/v1
 ```
 
-Change the value to the API base URL when using a different host or port. The
-API's CORS configuration must allow the URL origin where the browser loads the
-client. Restart the apps after changing environment files.
+### Run in development
 
-## 5. Run the monorepo
-
-Start the API and web client together from the monorepo root:
+From the monorepo root:
 
 ```bash
 pnpm dev
 ```
 
-Open the client at <http://localhost:3000>. The API health endpoint is
-<http://localhost:5000/v1/health>, and its interactive API documentation is at
-<http://localhost:5000/v1/api-docs>.
-
-To run only one app, use the corresponding command from the monorepo root:
+Or run one side at a time:
 
 ```bash
 pnpm dev:server
 pnpm dev:client
 ```
 
-## 6. Build and run for production
-
-Build both apps from the monorepo root:
+### Build and run production locally
 
 ```bash
 pnpm build
-```
-
-Then start both production servers:
-
-```bash
 pnpm start
 ```
 
 ## Security
 
-The API does not provide authentication or authorization. Keep it on a trusted
-network or protect it with deployment-level access controls before exposing it
-to other users. CORS is not authentication or access control.
+The API has no authentication or authorization. Keep it on a trusted machine and do not expose it to untrusted networks without suitable access controls. CORS is not authentication.
